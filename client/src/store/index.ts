@@ -188,16 +188,18 @@ const actions = {
 
             let tarr:Array<any> = new Array<any>();
             for(let k:number=0; k<state.layers[j].keyframes.length; k++){
-                let pos:any = {
-                    "w":state.layers[j].keyframes[k].elProps.width,
-                    "h":state.layers[j].keyframes[k].elProps.height,
-                    "x":state.layers[j].keyframes[k].elProps.left,
-                    "y":state.layers[j].keyframes[k].elProps.top,
-                    "opacity":state.layers[j].keyframes[k].elProps.opacity,
-                    "keyframe":state.layers[j].keyframes[k].time,
-                    "animate":true
-                };
-                tarr.push(pos);
+                if(state.layers[j].keyframes[k].enabled){
+                    let pos:any = {
+                        "w":state.layers[j].keyframes[k].elProps.width,
+                        "h":state.layers[j].keyframes[k].elProps.height,
+                        "x":state.layers[j].keyframes[k].elProps.left,
+                        "y":state.layers[j].keyframes[k].elProps.top,
+                        "opacity":state.layers[j].keyframes[k].elProps.opacity,
+                        "keyframe":state.layers[j].keyframes[k].time,
+                        "animate":true
+                    };
+                    tarr.push(pos);
+                }
             }
 
             obj.pos = tarr;
@@ -222,7 +224,7 @@ const actions = {
             router.push("/video");
             //http://techslides.com/demos/sample-videos/small.mp4
             context.commit('publishStatus', {status:"published", fname:resolve.fname});
-        });
+        })
     },
     publishStatus(context: ActionContext<IState, IState>, status:IPublishType){
         context.commit('publishStatus', status);
@@ -330,7 +332,6 @@ const actions = {
         const layer:ILayer = { ...state.layers[state.selectedLayerIndex], keyframes:[...state.layers[state.selectedLayerIndex].keyframes] };
         let leftIndex:number = -1;
         let rightIndex:number = -1;
-       
 
         if(obj.tween){
             for(let i:number=0; i<layer.keyframes.length; i++){
