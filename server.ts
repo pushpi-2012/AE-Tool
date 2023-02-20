@@ -27,7 +27,7 @@ class Server {
 	constructor(){
 		this.port = process.env.PORT || 4001;
 		this.isWin = process.platform === "win32";
-		this.currentPath = __dirname.replace(/\\/g, '/');
+		this.currentPath = "/Users/madhukarsharma/Desktop/workspace/AE-Tool";//__dirname.replace(/\\/g, '/');
 		
 		this.app.use(express.json());
 		//this.app.use(cors());
@@ -167,7 +167,6 @@ class Server {
 		}else{
 			let data = `tell application "Adobe After Effects 2023"
   DoScriptFile "${this.currentPath}/ae/template.jsx"
-  DoScript "loaded('${values}')"
 end tell`;
 			fs.writeFileSync(this.currentPath+'/ae/buildm.scpt', data);
 		}

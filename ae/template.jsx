@@ -1,5 +1,5 @@
-var currentPath = values.split("|")[1];
-var unitPath = currentPath +"/"+ values.split("|")[0];
+var currentPath = "/Users/madhukarsharma/Desktop/workspace/AE-Tool";//values.split("|")[1];
+var unitPath = currentPath +"/"+ "client/units/test-1";//currentPath +"/"+ values.split("|")[0];
 
 var json2 = currentPath+"/ae/json2.jsx";
 $.evalFile(json2);
