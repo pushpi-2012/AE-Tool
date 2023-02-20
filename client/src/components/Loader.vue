@@ -1,0 +1,107 @@
+<template>
+    <div class="disabler" v-if="publishStatus.status=='processing'">
+        <div class="card">
+            <span class="loader"></span>
+            Processing video ...
+        </div>
+        
+    </div>
+</template>
+
+<script lang="ts">
+    import Vue from 'vue';
+    import { mapGetters } from 'vuex';
+
+    export default Vue.extend({
+        name: 'Loader',
+        computed:{
+            ...mapGetters({publishStatus:'getPublishStatus'})
+        }
+    })
+</script>
+
+
+<style scoped>
+    .disabler {
+        width:100vw;
+        height:100vh;
+        position:absolute;
+        background:rgba(0, 0, 0, 0.15);
+        z-index:900;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .card{
+        width:300px;
+        height:160px;
+        border-radius: 8px;
+        background: rgba(256, 256, 256, 1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 30px;
+    }
+
+    .loader {
+        animation: rotate 1s infinite;
+        height: 50px;
+        width: 50px;
+    }
+    .loader:before,
+    .loader:after {
+        content: "";
+        display: block;
+        height: 20px;
+        width: 20px;
+    }
+    .loader:before {
+        animation: box1 1s infinite;
+        background-color: #000;
+        box-shadow: 30px 0 0 #ff3d00;
+        margin-bottom: 10px;
+    }
+    .loader:after {
+        animation: box2 1s infinite;
+        background-color: #ff3d00;
+        box-shadow: 30px 0 0 #000;
+    }
+
+    @keyframes rotate {
+        0% { transform: rotate(0deg) scale(0.8) }
+        50% { transform: rotate(360deg) scale(1.2) }
+        100% { transform: rotate(720deg) scale(0.8) }
+    }
+
+    @keyframes box1 {
+        0% {
+            box-shadow: 30px 0 0 #ff3d00;
+        }
+        50% {
+            box-shadow: 0 0 0 #ff3d00;
+            margin-bottom: 0;
+            transform: translate(15px, 15px);
+        }
+        100% {
+            box-shadow: 30px 0 0 #ff3d00;
+            margin-bottom: 10px;
+        }
+        }
+
+        @keyframes box2 {
+        0% {
+            box-shadow: 30px 0 0 #000;
+        }
+        50% {
+            box-shadow: 0 0 0 #000;
+            margin-top: -20px;
+            transform: translate(15px, 15px);
+        }
+        100% {
+            box-shadow: 30px 0 0 #000;
+            margin-top: 0;
+        }
+    }
+    
+</style>

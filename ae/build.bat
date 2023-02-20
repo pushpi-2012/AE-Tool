@@ -1,0 +1,1 @@
+"afterfx.exe" -s "var values='ae/units/test-1|C:/PAPA/OFFICE/Richmedia/Automation/AE-Tool'; $.evalFile("C:/PAPA/OFFICE/Richmedia/Automation/AE-Tool/ae/template.jsx")"
