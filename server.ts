@@ -27,7 +27,7 @@ class Server {
 	constructor(){
 		this.port = process.env.PORT || 4001;
 		this.isWin = process.platform === "win32";
-		this.currentPath = "/Users/madhukarsharma/Desktop/workspace/AE-Tool";//__dirname.replace(/\\/g, '/');
+		this.currentPath = __dirname.replace(/\\/g, '/');
 		
 		this.app.use(express.json());
 		//this.app.use(cors());
@@ -56,9 +56,9 @@ class Server {
 		});
 
 		this.app.get('/output/status', (req:Request, res:Response) => {
-			const watcher = chokidar.watch(`./output/${req.query.fname}`, {ignored: /^\./, persistent: false});
-			watcher.on('change', (filename:string) => {
-				if(filename.split('.').length == 2 && filename.split('.')[1] === "mp4"){
+			const watcher = chokidar.watch(`output/${req.query.fname}`, {ignored: /^\./, persistent: false});
+			watcher.on('add', (filename:string) => {
+				if(filename.split('.').length === 2 && filename.split('.')[1] === "mp4"){
 					watcher.close().then(() => {
 						setTimeout(async()=>{
 							const vpath:string = this.currentPath+"/"+filename.replace(/\\/g, '/');
@@ -166,7 +166,8 @@ class Server {
 			fs.writeFileSync('./ae/build.bat', data);
 		}else{
 			let data = `tell application "Adobe After Effects 2023"
-  DoScriptFile "${this.currentPath}/ae/template.jsx"
+	DoScript "var values='${values}'"
+	DoScriptFile "${this.currentPath}/ae/template.jsx"
 end tell`;
 			fs.writeFileSync(this.currentPath+'/ae/buildm.scpt', data);
 		}

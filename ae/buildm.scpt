@@ -1,4 +1,4 @@
 tell application "Adobe After Effects 2023"
-  DoScriptFile "/Users/admin/Desktop/AE-Tool/ae/template.jsx"
-  DoScript "loaded('ae/units/test-1|/Users/admin/Desktop/AE-Tool')"
+	DoScript "var values='ae/units/test-1|/Users/admin/Desktop/Projects/AE-Tool'"
+	DoScriptFile "/Users/admin/Desktop/Projects/AE-Tool/ae/template.jsx"
 end tell
