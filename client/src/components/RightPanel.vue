@@ -52,7 +52,7 @@
                             selectedKeyframeIndex:"getSelectedKeyframeIndex", preview:'getPreviewStatus',  projectDetails:'getProjectDetails'})
         },
         methods:{
-            ...mapActions(['changeProjectDetails', 'published', 'addLayer', 'updateLayer']),
+            ...mapActions(['changeProjectDetails', 'published', 'addLayer', 'updateLayer', 'positionAnimatedFrames']),
             fileSelected(evt:any){
                 const files:Array<File> = evt.target.files;
                 if (files && files.length) {
@@ -66,7 +66,12 @@
                 const keyframe:IKeyframe = {...layer.keyframes[this.selectedKeyframeIndex], 
                                             elProps:{...layer.keyframes[this.selectedKeyframeIndex].elProps, [key]:Math.round(Number(evt.target.value))}};
                 layer.keyframes.splice(this.selectedKeyframeIndex, 1, keyframe);
-                this.updateLayer(layer);
+
+                if(keyframe.locked){
+                    this.positionAnimatedFrames(keyframe);
+                }else{
+                    this.updateLayer(layer);
+                }
             },
             capitalize(str:string){
                 return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();

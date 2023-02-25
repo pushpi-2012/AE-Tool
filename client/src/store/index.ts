@@ -59,7 +59,7 @@ const state: IState = {
     selectedLayerIndex:-1,
     selectedKeyframeIndex:0,
     preview:false,
-    previewTime:0,
+    previewTime:.5,
     contextMenu:{
         show:false,
         top:0,
@@ -79,6 +79,26 @@ const getLayerIndex = (id:string) => {
         }
     }
     return index;
+}
+
+const positionKeyframes = (layer:ILayer, start:number, end:number) => {
+    const fps:number = 1000/40;
+    const timediff:number = (layer.keyframes[end].time - layer.keyframes[start].time)*fps;
+    const fw:number = layer.keyframes[end].elProps.width - layer.keyframes[start].elProps.width;
+    const fh:number = layer.keyframes[end].elProps.height - layer.keyframes[start].elProps.height;
+    const ft:number = layer.keyframes[end].elProps.top - layer.keyframes[start].elProps.top;
+    const fl:number = layer.keyframes[end].elProps.left - layer.keyframes[start].elProps.left;
+    const fo:number = layer.keyframes[end].elProps.opacity - layer.keyframes[start].elProps.opacity;
+    const fr:number = layer.keyframes[end].elProps.rotation - layer.keyframes[start].elProps.rotation;
+
+    for(let i:number=start+1; i<end; i++){
+        layer.keyframes[i].elProps.width = Math.round(layer.keyframes[i-1].elProps.width+(fw/timediff));
+        layer.keyframes[i].elProps.height = Math.round(layer.keyframes[i-1].elProps.height+(fh/timediff));
+        layer.keyframes[i].elProps.top = Math.round(layer.keyframes[i-1].elProps.top+(ft/timediff));
+        layer.keyframes[i].elProps.left = Math.round(layer.keyframes[i-1].elProps.left+(fl/timediff));
+        layer.keyframes[i].elProps.opacity = layer.keyframes[i-1].elProps.opacity+(fo/timediff);
+        layer.keyframes[i].elProps.rotation = layer.keyframes[i-1].elProps.rotation+(fr/timediff);
+    }
 }
 
 const getLayerClr = (type:string) => {
@@ -245,7 +265,7 @@ const actions = {
         layer.element.id = layer.id;
         layer.element.label = comp.label;
 
-        let keyframe:IKeyframe = { ...blankKeyframe, elProps:{...blankKeyframe.elProps} }
+        let keyframe:IKeyframe = { ...blankKeyframe, elProps:{...blankKeyframe.elProps}, time:state.previewTime }
         switch(comp.label){
             case "Video" :
                 keyframe.elProps.width = state.projectDetails.width;
@@ -289,6 +309,9 @@ const actions = {
     updateLayer(context: ActionContext<IState, IState>, layer:ILayer){
         context.commit('updateLayer', {index:state.selectedLayerIndex, layer:layer});
     },
+    updateLayerVisibility(context: ActionContext<IState, IState>, obj:any){
+        context.commit('updateLayer', {index:obj.index, layer:obj.layer});
+    },
     shuffleLayers(context: ActionContext<IState, IState>, list:Array<ILayer>){
         context.commit('shuffleLayers', list);
     },
@@ -296,9 +319,24 @@ const actions = {
     updateSLKIndex(context: ActionContext<IState, IState>, index:number){
         context.commit('updateSLKIndex', index);
     },
+    activateKeyframe(context: ActionContext<IState, IState>, time:number){
+        let index:number = -1;
+        const layer:ILayer = {...state.layers[state.selectedLayerIndex], keyframes:[...state.layers[state.selectedLayerIndex].keyframes]}
+        for(let j:number=0; j<state.layers[state.selectedLayerIndex].keyframes.length; j++){
+            if(state.layers[state.selectedLayerIndex].keyframes[j].time === parseFloat(Number(time).toFixed(2))){
+                index = j;
+                break;
+            }
+        }
+
+        layer.keyframes[index].enabled = true;
+        layer.keyframes[index].locked = true;
+        context.commit('updateLayer', {index:state.selectedLayerIndex, layer:layer});
+        context.commit('updateSKIndex', index);
+    },
     addKeyframe(context: ActionContext<IState, IState>, time:number){
         const layer:ILayer = {...state.layers[state.selectedLayerIndex] };
-        const keyframe:IKeyframe = { ...blankKeyframe, time:time, enabled:true, elProps:{...layer.keyframes[layer.keyframes.length-1].elProps}};
+        const keyframe:IKeyframe = { ...blankKeyframe, time:parseFloat(time.toFixed(2)), enabled:true, elProps:{...layer.keyframes[layer.keyframes.length-1].elProps}};
         layer.keyframes.push(keyframe);
         //sorting needs to be done with respect to time//
         layer.keyframes.sort((k1:IKeyframe, k2:IKeyframe) => k1.time-k2.time);
@@ -308,9 +346,30 @@ const actions = {
     },
     removeKeyframe(context: ActionContext<IState, IState>){
         const layer:ILayer = {...state.layers[state.selectedLayerIndex], keyframes:[...state.layers[state.selectedLayerIndex].keyframes]};
-        layer.keyframes.splice(state.selectedKeyframeIndex, 1);
+        let leftIndex:number = -1, rightIndex:number = -1;
+        
+        if(layer.keyframes[state.selectedKeyframeIndex].locked){
+            for(let j:number=state.selectedKeyframeIndex-1; j>=0; j--){
+                if(layer.keyframes[j].enabled){
+                    leftIndex = j;
+                    break;
+                }
+            }
+
+            for(let k:number=state.selectedKeyframeIndex+1; k<layer.keyframes.length; k++){
+                if(layer.keyframes[k].enabled){
+                    rightIndex = k;
+                    break;
+                }
+            }
+        }
+        
+        leftIndex = leftIndex!==-1 ? leftIndex+1 : state.selectedKeyframeIndex;
+        rightIndex = rightIndex!==-1 ? rightIndex : state.selectedKeyframeIndex+1;
+        layer.keyframes.splice(leftIndex, rightIndex-leftIndex);
+
         context.commit('updateLayer', {index:state.selectedLayerIndex, layer:layer});
-        context.commit('updateSKIndex', state.selectedKeyframeIndex-1);
+        context.commit('updateSKIndex', leftIndex>0?leftIndex-1:leftIndex);
     },
     updateKeyframe(context: ActionContext<IState, IState>, kf:IKeyframe){
        const layer:ILayer = {...state.layers[state.selectedLayerIndex], 
@@ -332,6 +391,7 @@ const actions = {
         const layer:ILayer = { ...state.layers[state.selectedLayerIndex], keyframes:[...state.layers[state.selectedLayerIndex].keyframes] };
         let leftIndex:number = -1;
         let rightIndex:number = -1;
+        const fps:number = .04;
 
         if(obj.tween){
             for(let i:number=0; i<layer.keyframes.length; i++){
@@ -344,27 +404,40 @@ const actions = {
             layer.keyframes.splice(leftIndex, 1, {...layer.keyframes[leftIndex], locked:true});
             layer.keyframes.splice(rightIndex, 1, {...layer.keyframes[rightIndex], locked:true});
 
-            const timediff:number = (layer.keyframes[rightIndex].time - layer.keyframes[leftIndex].time)*1000/40;
-            const fw:number = layer.keyframes[rightIndex].elProps.width - layer.keyframes[leftIndex].elProps.width;
+            const timediff:number = (layer.keyframes[rightIndex].time - layer.keyframes[leftIndex].time)*1/fps;
+            /*const fw:number = layer.keyframes[rightIndex].elProps.width - layer.keyframes[leftIndex].elProps.width;
             const fh:number = layer.keyframes[rightIndex].elProps.height - layer.keyframes[leftIndex].elProps.height;
             const ft:number = layer.keyframes[rightIndex].elProps.top - layer.keyframes[leftIndex].elProps.top;
             const fl:number = layer.keyframes[rightIndex].elProps.left - layer.keyframes[leftIndex].elProps.left;
             const fo:number = layer.keyframes[rightIndex].elProps.opacity - layer.keyframes[leftIndex].elProps.opacity;
-            const fr:number = layer.keyframes[rightIndex].elProps.rotation - layer.keyframes[leftIndex].elProps.rotation;
+            const fr:number = layer.keyframes[rightIndex].elProps.rotation - layer.keyframes[leftIndex].elProps.rotation; */
             
-            for(var j:number=0; j<Math.round(timediff)-1; j++){
+            rightIndex = leftIndex+Math.round(timediff);
+            for(let j:number=leftIndex+1; j<rightIndex; j++){
                 const keyframe:IKeyframe = { ...blankKeyframe, elProps:{...blankKeyframe.elProps} };
+                layer.keyframes.splice(j, 0, keyframe);
                 keyframe.enabled = false;
-                keyframe.time = layer.keyframes[leftIndex].time + .04*(j+1);
+                keyframe.time = Number((layer.keyframes[j-1].time + fps).toFixed(2));
+                
+                /* keyframe.elProps.width = Math.round(layer.keyframes[j-1].elProps.width+(fw/timediff));
+                keyframe.elProps.height = Math.round(layer.keyframes[j-1].elProps.height+(fh/timediff));
+                keyframe.elProps.top = Math.round(layer.keyframes[j-1].elProps.top+(ft/timediff));
+                keyframe.elProps.left = Math.round(layer.keyframes[j-1].elProps.left+(fl/timediff));
+                keyframe.elProps.opacity = layer.keyframes[j-1].elProps.opacity+(fo/timediff);
+                keyframe.elProps.rotation = layer.keyframes[j-1].elProps.rotation+(fr/timediff); */
+                
+                /* keyframe.time = layer.keyframes[leftIndex].time + fps*(j+1);
                 keyframe.elProps.width = Math.round(layer.keyframes[leftIndex].elProps.width+((fw/timediff)*(j+1)));
                 keyframe.elProps.height = Math.round(layer.keyframes[leftIndex].elProps.height+((fh/timediff)*(j+1)));
                 keyframe.elProps.top = Math.round(layer.keyframes[leftIndex].elProps.top+((ft/timediff)*(j+1)));
                 keyframe.elProps.left = Math.round(layer.keyframes[leftIndex].elProps.left+((fl/timediff)*(j+1)));
                 keyframe.elProps.opacity = layer.keyframes[leftIndex].elProps.opacity+(fo/timediff)*(j+1);
                 keyframe.elProps.rotation = layer.keyframes[leftIndex].elProps.rotation+(fr/timediff)*(j+1);
-                layer.keyframes.splice(rightIndex+j, 0, keyframe);
+                layer.keyframes.splice(rightIndex+(j-1), 0, keyframe); */
             }
 
+
+            positionKeyframes(layer, leftIndex, rightIndex);
             context.commit('updateLayer', {index:state.selectedLayerIndex, layer:layer});
         }else{
             for(let i:number=layer.keyframes.length-1; i>=0; i--){
@@ -387,6 +460,66 @@ const actions = {
             context.commit('updateLayer', {index:state.selectedLayerIndex, layer:layer});
             context.commit('updateSKIndex', leftIndex);
         }
+    },
+    positionAnimatedFrames(context: ActionContext<IState, IState>, selectedKeyframe:IKeyframe){
+        const layer:ILayer = {...state.layers[state.selectedLayerIndex], keyframes:[...state.layers[state.selectedLayerIndex].keyframes]};
+        layer.keyframes[state.selectedKeyframeIndex] = selectedKeyframe;
+        let leftIndex:number = -1, rightIndex:number = -1;
+
+        for(let j:number=state.selectedKeyframeIndex+1; j<layer.keyframes.length; j++){
+            if(layer.keyframes[j].enabled){
+                rightIndex = j;
+                break;
+            }
+        }
+        for(let k:number=state.selectedKeyframeIndex-1; k>=0; k--){
+            if(layer.keyframes[k].enabled){
+                leftIndex = k;
+                break;
+            }
+        }
+
+        if(leftIndex !== state.selectedKeyframeIndex && leftIndex !== -1){
+            positionKeyframes(layer, leftIndex, state.selectedKeyframeIndex);
+            /* const timediff:number = (selectedKeyframe.time - layer.keyframes[leftIndex].time)*fps;
+            const fw:number = selectedKeyframe.elProps.width - layer.keyframes[leftIndex].elProps.width;
+            const fh:number = selectedKeyframe.elProps.height - layer.keyframes[leftIndex].elProps.height;
+            const ft:number = selectedKeyframe.elProps.top - layer.keyframes[leftIndex].elProps.top;
+            const fl:number = selectedKeyframe.elProps.left - layer.keyframes[leftIndex].elProps.left;
+            const fo:number = selectedKeyframe.elProps.opacity - layer.keyframes[leftIndex].elProps.opacity;
+            const fr:number = selectedKeyframe.elProps.rotation - layer.keyframes[leftIndex].elProps.rotation;
+
+            for(let i:number=leftIndex+1; i<state.selectedKeyframeIndex; i++){
+                layer.keyframes[i].elProps.width = Math.round(layer.keyframes[i-1].elProps.width+(fw/timediff));
+                layer.keyframes[i].elProps.height = Math.round(layer.keyframes[i-1].elProps.height+(fh/timediff));
+                layer.keyframes[i].elProps.top = Math.round(layer.keyframes[i-1].elProps.top+(ft/timediff));
+                layer.keyframes[i].elProps.left = Math.round(layer.keyframes[i-1].elProps.left+(fl/timediff));
+                layer.keyframes[i].elProps.opacity = layer.keyframes[i-1].elProps.opacity+(fo/timediff);
+                layer.keyframes[i].elProps.rotation = layer.keyframes[i-1].elProps.rotation+(fr/timediff);
+            } */
+        }
+
+        if(rightIndex != state.selectedKeyframeIndex && rightIndex !== -1){
+            positionKeyframes(layer, state.selectedKeyframeIndex, rightIndex);
+            /* const timediff:number = (layer.keyframes[rightIndex].time - selectedKeyframe.time)*fps;
+            const fw:number = layer.keyframes[rightIndex].elProps.width - selectedKeyframe.elProps.width;
+            const fh:number = layer.keyframes[rightIndex].elProps.height - selectedKeyframe.elProps.height;
+            const ft:number = layer.keyframes[rightIndex].elProps.top - selectedKeyframe.elProps.top;
+            const fl:number = layer.keyframes[rightIndex].elProps.left - selectedKeyframe.elProps.left;
+            const fo:number = layer.keyframes[rightIndex].elProps.opacity - selectedKeyframe.elProps.opacity;
+            const fr:number = layer.keyframes[rightIndex].elProps.rotation - selectedKeyframe.elProps.rotation;
+
+            for(let i:number=state.selectedKeyframeIndex+1; i<rightIndex; i++){
+                layer.keyframes[i].elProps.width = Math.round(layer.keyframes[i-1].elProps.width+(fw/timediff));
+                layer.keyframes[i].elProps.height = Math.round(layer.keyframes[i-1].elProps.height+(fh/timediff));
+                layer.keyframes[i].elProps.top = Math.round(layer.keyframes[i-1].elProps.top+(ft/timediff));
+                layer.keyframes[i].elProps.left = Math.round(layer.keyframes[i-1].elProps.left+(fl/timediff));
+                layer.keyframes[i].elProps.opacity = layer.keyframes[i-1].elProps.opacity+(fo/timediff)*i;
+                layer.keyframes[i].elProps.rotation = layer.keyframes[i-1].elProps.rotation+(fr/timediff)*i;
+            } */
+        }
+
+        context.commit('updateLayer', {index:state.selectedLayerIndex, layer:layer});
     }
 };
 

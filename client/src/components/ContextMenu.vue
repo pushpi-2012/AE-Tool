@@ -1,13 +1,13 @@
 <template>
     <div class="right-menu" @click="clickHandler" @contextmenu="(evt)=>evt.preventDefault()">
         <div class="rmenu-card" :style="{left:`${left}px`, top:`${top}px`}">
-            <div :class="{'rmenu-btn':contextMenu.target!=='key-frame', 'disabled':contextMenu.target==='key-frame' || contextMenu.target==='disabled'}" 
+            <div :class="{'rmenu-btn':contextMenu.target.className!=='key-frame', 'disabled':contextMenu.target.className==='key-frame' || contextMenu.target.className==='disabled' || !enableTween}" 
                 @click="animateHandler($event, true)">Add Tween</div>
-            <div :class="{'rmenu-btn':contextMenu.target==='disabled', 'disabled':contextMenu.target==='key-frame' || contextMenu.target!=='disabled'}" 
+            <div :class="{'rmenu-btn':contextMenu.target.className==='disabled', 'disabled':contextMenu.target.className==='key-frame' || contextMenu.target.className !== 'disabled'}" 
                 @click="animateHandler($event, false)">Remove Tween</div>
-            <div :class="{'rmenu-btn':contextMenu.target!=='key-frame', 'disabled':contextMenu.target==='key-frame'}" 
+            <div :class="{'rmenu-btn':contextMenu.target.className!=='key-frame', 'disabled':contextMenu.target.className==='key-frame'}" 
                 @click="keyframeHandler($event, true)">Add keyframe</div>
-            <div :class="{'rmenu-btn':contextMenu.target==='key-frame', 'disabled':contextMenu.target!=='key-frame' || layer.keyframes.length<=1}" 
+            <div :class="{'rmenu-btn':contextMenu.target.className==='key-frame', 'disabled':contextMenu.target.className!=='key-frame' || layer.keyframes.length<=1}" 
                 @click="keyframeHandler($event, false)">Remove keyframe</div>
         </div>
     </div>
@@ -16,31 +16,44 @@
 <script lang="ts">
     import Vue from 'vue';
     import { mapActions, mapGetters } from 'vuex';
-    import { IContextMenu } from '@/store/commonTypes';
+    import { IContextMenu, IKeyframe } from '@/store/commonTypes';
 
     export default Vue.extend({
         name:"ContextMenu",
         data(){
             return {
                 top:0,
-                left:0
+                left:0,
+                enableTween:false
             }
         },
         mounted(){
             this.top = this.contextMenu.top-250;
             this.left = this.contextMenu.left-125;
+            let leftIndex:number=-1, rightIndex:number=-1;
+            this.layer.keyframes.forEach((keyframe:IKeyframe, index:number) => {
+                if(keyframe.time < this.contextMenu.time){
+                    leftIndex = index;
+                }
+                if(keyframe.time > this.contextMenu.time){
+                    rightIndex = index;
+                }
+            });
+
+            this.enableTween = leftIndex !== -1 && rightIndex !== -1;
+
         },
         computed:{
-           ...mapGetters({contextMenu:'getContextMenu', layer:'getSelectedLayer'})
+           ...mapGetters({contextMenu:'getContextMenu', layer:'getSelectedLayer', projectTime:'getProjectTime'})
         },
         methods:{
-            ...mapActions(['udpateContextMenu', 'removeKeyframe','addKeyframe', 'animateKeyframe']),
+            ...mapActions(['udpateContextMenu', 'removeKeyframe','addKeyframe', 'animateKeyframe', 'activateKeyframe']),
             clickHandler(){
                 const cmenu:IContextMenu = {
                     show:false,
                     top:0,
                     left:0,
-                    target:"",
+                    target:{},
                     time:-1
                 }
                 this.udpateContextMenu(cmenu);
@@ -52,16 +65,13 @@
                     this.clickHandler();
                 }
             },
+
             keyframeHandler(evt:any, val:boolean){
                 const cls:any = (evt.target as any).className;
                 if(cls.indexOf('disabled')!==-1){ return; }
 
+                !val ? this.removeKeyframe() : this.contextMenu.target.className === "disabled" ? this.activateKeyframe((this.contextMenu.target as any).getAttribute("time") as number) : this.addKeyframe(this.contextMenu.time);
                 this.clickHandler();
-                if(!val){
-                    this.removeKeyframe();
-                }else{
-                    this.addKeyframe();
-                }
             }
         }
     })

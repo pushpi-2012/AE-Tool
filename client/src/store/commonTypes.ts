@@ -60,7 +60,7 @@ export interface IContextMenu {
     show:boolean,
     top:number,
     left:number,
-    target:string,
+    target:any,
     time:number
 }
 

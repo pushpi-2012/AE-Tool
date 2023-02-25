@@ -1,6 +1,6 @@
 <template>
     <div :class="{'key-frame':layers[layerIndex].keyframes[keyframeIndex].enabled, 'disabled':!layers[layerIndex].keyframes[keyframeIndex].enabled}" ref="keyframe" 
-        :style="{left:`${left}px`}" @mousedown="startDragging" @click="selectKeyframe">
+        :style="{left:`${left}px`}" @mousedown="startDragging" @click="selectKeyframe($event, layers[layerIndex].keyframes[keyframeIndex].enabled)">
         <div v-if="layerIndex===selectedLayerIndex && keyframeIndex===selectedKeyframeIndex" class="keyframe-child"></div>
     </div>
 </template>
@@ -63,8 +63,8 @@
                     this.$emit("clicked", this.updatedTime);
                 }
             },
-            selectKeyframe(evt:any){
-                this.layers[this.layerIndex].keyframes[this.keyframeIndex].enabled && this.$emit("clicked", this.updatedTime);
+            selectKeyframe(evt:any, enabled:boolean){
+                enabled && this.layers[this.layerIndex].keyframes[this.keyframeIndex].enabled && this.$emit("clicked", this.updatedTime);
             }
         }
     });

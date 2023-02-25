@@ -41,11 +41,15 @@
                         elProps:{ ...tlayer.keyframes[this.selectedKeyframeIndex].elProps, width:rect.width, height:rect.height, top:rect.top-this.shiftY, left:rect.left-this.shiftX}};
                 
                 tlayer.keyframes[this.selectedKeyframeIndex] = keyframe;
-                
                 el.style.setProperty("transform", "none");
                 el.setAttribute("data-x", "0");
                 el.setAttribute("data-y", "0");
-                this.updateLayer(tlayer);
+
+                if(keyframe.locked) {
+                    this.positionAnimatedFrames(keyframe);
+                }else{
+                    this.updateLayer(tlayer);
+                }
             }
         },
         components: {
@@ -142,7 +146,7 @@
             ...mapGetters({layer:'getSelectedLayer', selectedKeyframeIndex:"getSelectedKeyframeIndex", contextMenu:'getContextMenu'})
         },
         methods:{
-            ...mapActions(['updateLayer']),
+            ...mapActions(['updateLayer','positionAnimatedFrames']),
         }
     });
 </script>

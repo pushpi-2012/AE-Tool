@@ -24,7 +24,7 @@
             clickHandler(evt:any){
                 const el:any = this.$refs.timeTicker;
                 const posX:number = evt.clientX - el.getBoundingClientRect().left;
-                const time:number = parseFloat((posX*(this.projectTime/this.width)).toFixed(2));
+                const time:number = parseFloat(Number(posX*(this.projectTime/this.width)).toFixed(2));
                 this.updatePreviewTime(time);
                 this.preview && this.updatePreviewStatus(false);
             }

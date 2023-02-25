@@ -17,17 +17,17 @@
 			</div>
 		</div>
 
-		<div class="right-panel" ref="rightPanel">
+		<div id="rightPanel" class="right-panel" ref="rightPanel">
 			<Timebar v-if="layers.length>=1" v-bind:width="width"/>
 			<div class="layer-holder">
-				<div v-for="(layer, i) in layers" :key="i" style="position:relative;" @contextmenu="showContextMenu">
+				<div v-for="(layer, i) in layers" :key="i" style="position:relative;" @contextmenu="showContextMenu($event, i)">
 					<div class="layer-box" @dblclick="addNewKeyframe($event, i)" :style="{background:layer.bgClr, border:selectedLayerIndex===i?'2px solid blue':'1px solid black'}"></div>
 					
 					<Keyframe v-for="(keyframe, j) in layer.keyframes" :key="keyframe.time"
 						v-bind:layerIndex="i" v-bind:keyframeIndex="j"
 						v-bind:enabled="keyframe.enabled" v-bind:time="keyframe.time"
 						v-bind:width="width" v-bind:prnt="$refs.rightPanel" 
-						v-on:clicked="keyframeSelected($event, j, i)" />
+						v-on:clicked="keyframeSelected($event, j, i)" :id="'key_'+i+'_'+j" />
 				</div>
 			</div>
 		</div>
@@ -64,7 +64,7 @@
 		},
 		methods:{
 			...mapActions(['removeLayer', 'updateLayer', 'updateSLIndex', 'shuffleLayers', 'addKeyframe', 'updateSKIndex', 
-							'updatePreviewTime', 'udpateContextMenuStatus', 'udpateContextMenu', 'updateKeyframe']),
+							'updatePreviewTime', 'udpateContextMenuStatus', 'udpateContextMenu', 'updateKeyframe', 'updateLayerVisibility']),
 			clickHander(index:number){
 				this.updateSLIndex(index);
 				let timeDiff:number = this.projectTime;
@@ -111,7 +111,7 @@
 			addNewKeyframe(evt:any, layerIndex:number){
 				if(layerIndex === this.selectedLayerIndex){
 					const time:number = ((evt.clientX - this.shiftX)/this.width)*this.projectTime;
-					this.addKeyframe(parseFloat(time.toFixed(2)));
+					this.addKeyframe(time);
 				}
 			},
 			keyframeSelected(ktime:any, kindex:number, lindex:number){
@@ -126,19 +126,23 @@
 			controlVisibility(index:number){
 				const layer:ILayer = {...this.layers[index], element:{...this.layers[index].element}};
 				layer.element.show  = !layer.element.show;
-				this.updateLayer(layer);
+				this.updateLayerVisibility({layer:layer, index:index});
 			},
-			showContextMenu(evt:any){
+			showContextMenu(evt:any, index:number){
                 evt.preventDefault();
-				const time:number = ((evt.clientX - this.shiftX)/this.width)*this.projectTime;
+				const time:number = (Number(evt.clientX - this.shiftX)/this.width)*this.projectTime.toFixed(2) as number;
                 const cmenu:IContextMenu = {
                     show:true,
                     top:evt.clientY,
                     left:evt.clientX,
-                    target:evt.target.className,
+                    target:evt.target,
 					time:evt.target.className.indexOf("key-frame")!==-1?-1:time
                 }
 				
+				if(evt.target.className === "key-frame"){
+					this.updateSKIndex(Number(evt.target.getAttribute("id").split("_")[2]));
+				}
+				this.updateSLIndex(index);
                 this.udpateContextMenu(cmenu);
             }
 		},

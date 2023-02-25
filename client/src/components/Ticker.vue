@@ -16,7 +16,8 @@
         },
         data(){
             return {
-                interval:-1
+                interval:-1,
+                keyPressed:false
             }
         },
         watch:{
@@ -29,9 +30,18 @@
             }
         },
         mounted(){
+            document.addEventListener('keydown', (evt) => {
+                if(evt.key === "Control" && !this.keyPressed){
+                    this.keyPressed = true;
+                }
+			})
+
 			document.addEventListener('keyup', (evt) => {
-				if(evt.code === "Space"){
+                !this.keyPressed && evt.key==="Enter" && this.updatePreviewStatus(false);
+
+				if(evt.key === "Enter" && this.keyPressed){
                     this.updatePreviewStatus(!this.preview);
+                    this.keyPressed = false;
 				}
 			})
         },
