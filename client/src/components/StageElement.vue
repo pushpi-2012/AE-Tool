@@ -87,11 +87,12 @@
                 if(!this.preview){
                     this.tmpLayers[index] = this.getKeframeIndex(layer) || 0;
                 }else{
-                    //kindex = this.previewTime <= layer.keyframes[kindex].time ? kindex+1 : this.getKeframeIndex(layer);
-                    this.tmpLayers[index] = this.previewTime >= layer.keyframes[this.tmpLayers[index]].time ? this.tmpLayers[index]+1 : this.getKeframeIndex(layer);
+                    /* this.tmpLayers[index] = this.previewTime >= layer.keyframes[this.tmpLayers[index]].time ? this.tmpLayers[index]+1 : this.getKeframeIndex(layer);
                     if(this.tmpLayers[index] >= layer.keyframes.length){
                         this.tmpLayers[index] = layer.keyframes.length - 1;
-                    }
+                    } */
+
+                    this.tmpLayers[index] = this.previewTime >= layer.keyframes[this.tmpLayers[index]+1]?.time ? this.tmpLayers[index]+1 : this.tmpLayers[index];
                 }
 
                 const videoEl:any = (layer.element.type ==="video" && typeof(layer.element.src) !== "string") && createElement('video', {

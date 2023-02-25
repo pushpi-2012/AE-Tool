@@ -31,7 +31,7 @@
         },
         mounted(){
             document.addEventListener('keydown', (evt) => {
-                if(evt.key === "Control" && !this.keyPressed){
+                if(evt.key === "Shift" && !this.keyPressed){
                     this.keyPressed = true;
                 }
 			})
