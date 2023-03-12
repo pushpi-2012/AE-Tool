@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Vuex, { Store, ActionContext } from 'vuex';
 
-import { IComponent, IContextMenu, IElement, IKeyframe, ILayer, IProjectDetails, IPublishType, IState } from './commonTypes';
+import { IComponent, IContextMenu, IElement, IKeyframe, ILayer, IProjectDetails, IPublishType, IState, IZoom } from './commonTypes';
 import BaseJson from './baseJson';
 import { uploadFiles } from '@/components/Utils';
 import router from '@/router';
@@ -60,6 +60,12 @@ const state: IState = {
     selectedKeyframeIndex:0,
     preview:false,
     previewTime:.5,
+    zoom:{
+        value:100,
+        step:25,
+        min:25,
+        max:400
+    },
     contextMenu:{
         show:false,
         top:0,
@@ -163,6 +169,9 @@ const mutations = {
     },
     udpateContextMenu(state:IState, cmenu:IContextMenu){
         state.contextMenu = cmenu;
+    },
+    updateZoomValue(state:IState, val:IZoom){
+        state.zoom = val;
     }
 };
 
@@ -460,6 +469,10 @@ const actions = {
         leftIndex !== state.selectedKeyframeIndex && leftIndex !== -1 && positionKeyframes(layer, leftIndex, state.selectedKeyframeIndex);
         rightIndex != state.selectedKeyframeIndex && rightIndex !== -1 && positionKeyframes(layer, state.selectedKeyframeIndex, rightIndex);
         context.commit('updateLayer', {index:state.selectedLayerIndex, layer:layer});
+    },
+    updateZoomValue(context: ActionContext<IState, IState>, val:number){
+        const zoom:IZoom = {...state.zoom, value:val};
+        context.commit('updateZoomValue', zoom);
     }
 };
 
@@ -504,6 +517,9 @@ const store:Store<IState> =  new Vuex.Store({
         },
         getPublishStatus(){
             return state.projectDetails.publishStatus;
+        },
+        getZoomValue(){
+            return state.zoom;
         }
     },
     mutations,

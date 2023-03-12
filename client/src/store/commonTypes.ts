@@ -64,6 +64,13 @@ export interface IContextMenu {
     time:number
 }
 
+export interface IZoom {
+    value:number,
+    step:number,
+    min:number,
+    max:number
+}
+
 export interface IState {
     projectDetails:IProjectDetails,
     preview:boolean,
@@ -73,5 +80,6 @@ export interface IState {
     selectedLayerIndex:number,
     selectedKeyframeIndex:number,
     components:Array<IComponent>,
-    contextMenu:IContextMenu
+    contextMenu:IContextMenu,
+    zoom:IZoom
 }

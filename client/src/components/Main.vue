@@ -1,6 +1,6 @@
 <template>
-    <div class="main-panel" :style="{minWidth:`${projectDetails.width+40}px`}">
-        <StageElement />
+    <div class="main-panel" :style="{minWidth:`${projectDetails.width+40}px;`}">
+        <StageElement :style="{transform:`matrix(${zoom.value/100}, 0, 0, ${zoom.value/100}, 0, 0)`,  transformOrigin:'center center'}" />
     </div>
 </template>
     
@@ -14,10 +14,20 @@
         components:{
             StageElement
         },
+        data(){
+            return {
+                top:0,
+                left:0
+            }
+        },
         mounted() { },
-        watch:{ },
+        watch:{ 
+            zoom(){
+                //this.left = 
+            }
+        },
         computed:{ 
-            ...mapGetters({projectDetails:'getProjectDetails'})
+            ...mapGetters({projectDetails:'getProjectDetails', zoom:'getZoomValue'})
         },
         methods:{ },
         updated(){ }
@@ -27,7 +37,7 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
     .main-panel{
-        height:calc(100vh - 30px - 22vh); 
+        height:calc(100vh - 40px - 22vh); 
         overflow:auto;
         display: flex;
         justify-content: center;
