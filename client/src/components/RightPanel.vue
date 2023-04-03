@@ -10,7 +10,7 @@
             <hr />
             <div v-if="selectedLayerIndex !== -1">
                 <div v-if="layers[selectedLayerIndex].element.label==='Video' || layers[selectedLayerIndex].element.label==='Image'" style="display:flex; align-items:center;flex-direction:column;">
-                    <b-form-file accept=".jpg, .png, .gif .mp4" @change="fileSelected" size="sm"  style="width:250px;"/>
+                    <b-form-file accept="*" @change="fileSelected" size="sm"  style="width:250px;"/>
                     <hr style="height:2px; width:100%;"/>
                 </div>
                 
