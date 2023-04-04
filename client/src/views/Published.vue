@@ -20,7 +20,6 @@
             ...mapGetters({status:'getPublishStatus', projectDetails:'getProjectDetails'})
         },
         mounted(){
-            location.reload();
         },
         methods:{
             ...mapActions(['publishStatus']),
