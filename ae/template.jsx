@@ -185,7 +185,6 @@ function initilize(){
 	}
 
 	var taskId = app.scheduleTask("ameRender()", 200, false);
-	
 	function err(errString) {
 		//alert(errString) ;
 	}

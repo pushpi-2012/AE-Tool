@@ -1,10 +1,8 @@
 import * as fs from 'fs';
 import * as fse from 'fs-extra'
 import * as path from 'path';
-import * as open from "open";
 
 const multer = require('multer');
-import * as watch from 'node-watch';
 import * as child from 'child_process';
 import * as chokidar from 'chokidar';
 
@@ -40,6 +38,32 @@ class Server {
 	}
 	
 	private routers = async() => {
+		this.app.get("/", (req:Request, res:Response)=>{
+			res.send("hello there!");
+		});
+
+		this.app.get('/find_video', (req:Request, res:Response)=>{
+			if(fs.existsSync(`./output/${req.query.id}`)){
+				let name = "video";
+				fs.readdir(path.join(__dirname, `./output/${req.query.id}`), (err, files) => {
+					let time = 0;
+					files.forEach(file=>{
+						if(file.split(".mp4").length>=2){
+							const { mtime } = fs.statSync(path.join(__dirname, `./output/${req.query.id}/${file}`));
+							if(mtime.getTime() > time){
+								name = file.split(".")[0];
+								time = mtime.getTime();
+							}
+						}
+					});
+
+					res.status(200).json({found:true, name:name});
+				})
+			}else{
+				res.status(200).json({found:false, name:''});
+			}
+		});
+
 		this.app.post('/json', async(req:Request, res:Response) => {
 			const json = req.body;
 			let unitName = json.project.unit;
@@ -56,15 +80,13 @@ class Server {
 		});
 
 		this.app.get('/output/status', (req:Request, res:Response) => {
-			const watcher = chokidar.watch(`output/${req.query.fname}`, {ignored: /^\./, persistent: false});
-			watcher.on('add', (filename:string) => {
+			const watcher = chokidar.watch(`./output/${req.query.id}/${req.query.name}.mp4`, {ignored: /^\./, persistent: true});
+			watcher.on('add', (filename:string, stats:any) => {
 				if(filename.split('.').length === 2 && filename.split('.')[1] === "mp4"){
 					watcher.close().then(() => {
 						setTimeout(async()=>{
 							const vpath:string = this.currentPath+"/"+filename.replace(/\\/g, '/');
-							//temperory line of code to overcome chrome local assets loading problem//
-							await fse.copy(filename.replace(/\\/g, '/'), "./client/src/assets/preview.mp4");
-							res.status(200).json({msg:'published', fname:vpath});
+							res.status(200).json({msg:'published', fname:`http://localhost:4001/output/${req.query.id}/${req.query.name}.mp4`});
 						}, 2000);
 					})
 				}
@@ -108,7 +130,7 @@ class Server {
 				})
 			});
 
-			res.status(200).contentType("text/plain").end("images uploaded!");
+			setTimeout(()=>res.status(200).contentType("text/plain").end("images uploaded!"), 500);
 		});
 
 		this.app.post("/upload_videos", upload.array('video'), async(req:any, res:Response) => {
@@ -127,7 +149,7 @@ class Server {
 				})
 			});
 
-			res.status(200).contentType("text/plain").end("videos uploaded!");
+			setTimeout(()=>res.status(200).contentType("text/plain").end("videos uploaded!"), 1000);
 		})
 
 
@@ -174,41 +196,6 @@ end tell`;
 
 		console.log("***Batch file written location successfully***");
 		this.runBatch();
-	}
-	
-	private watchFolders = (fname:string):void => {
-		if(this.appStatus !== "init"){
-			return
-		}
-		
-		this.appStatus = "init";
-		/* chokidar.watch('./ae/units', {ignored: /^\./, persistent: false, depth:0})
-		.on('addDir', (filename:string) => {
-			var fname:string = filename.replace(/(\/|\\)/g, '|').replace('aeunits','');
-			console.log(filename, fname)
-			if(fname.split("|")[2] && this.fileStatus === "init"){
-				this.fileStatus = "loaded";
-				this.writeBatch(filename);
-			}
-		}); */
-		
-		/* chokidar.watch('./output', {ignored: /^\./, persistent: false})
-		.on('add', (filename:string) => {
-			console.log(filename)
-			if(filename.split('.').length == 2 && filename.split('.')[1] === "mp4"){
-				console.log(this.dirname);
-				if(this.dirname != filename){
-					let mtime:number;
-					fs.stat(filename, (error, stats)=> {
-						mtime = stats.mtimeMs;
-						if(this.creationTime > mtime){
-							this.openBrowser(`http://localhost:${this.port}/?path=${filename}`);
-						}
-					});
-				}
-				this.dirname = filename;
-			}
-		}); */
 	}
 }
 

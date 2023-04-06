@@ -3,8 +3,9 @@
         <div class="header">
             <button @click="clickHandler">Edit</button>
         </div>
+
         <div class="video-container">
-            <video src="../assets/preview.mp4" :width="projectDetails.width" :height="projectDetails.height" controls autoplay muted />
+            <video :src="status.fname" :width="projectDetails.width" :height="projectDetails.height" controls autoplay muted />
         </div>
     </div>
 </template>

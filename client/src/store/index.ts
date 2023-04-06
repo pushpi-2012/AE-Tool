@@ -3,7 +3,7 @@ import Vuex, { Store, ActionContext } from 'vuex';
 
 import { IComponent, IContextMenu, IElement, IKeyframe, ILayer, IProjectDetails, IPublishType, IState, IZoom } from './commonTypes';
 import BaseJson from './baseJson';
-import { uploadFiles } from '@/components/Utils';
+import { uploadFiles, videoExist } from '@/components/Utils';
 import router from '@/router';
 
 Vue.use(Vuex);
@@ -44,7 +44,8 @@ const blankKeyframe:IKeyframe = {
 
 const state: IState = {
     projectDetails:{
-        name:"test-1",
+        id:"test-1",
+        name:"video-1",
         width:1280,
         height:720,
         time:30,
@@ -176,6 +177,19 @@ const mutations = {
 };
 
 const actions = {
+    initilized(context: ActionContext<IState, IState>){
+        videoExist(state.projectDetails.name, state.projectDetails.id).then((resolve:any)=>{
+            if(resolve.exist){
+                let vname:string = resolve.name.split("-")[0]+"-";
+                if(resolve.name.split("-")[1]){
+                    vname = vname + Number(Number(resolve.name.split("-")[1])+1)
+                }else{
+                    vname = vname + "1";
+                }
+                context.commit("changeProjectDetails", {name:"name", value:vname});
+            }
+        });
+    },
     changeProjectDetails(context: ActionContext<IState, IState>, evt: Event) {
         context.commit('changeProjectDetails', evt.target);
     },
@@ -185,7 +199,8 @@ const actions = {
         baseJson.project.duration = state.projectDetails.time;
 		baseJson.project.width = state.projectDetails.width;
 		baseJson.project.height = state.projectDetails.height;
-		baseJson.project.unit = state.projectDetails.name;
+		baseJson.project.name = state.projectDetails.name;
+        baseJson.project.unit = state.projectDetails.id;
         
         const formData:any = new FormData();
         formData.enctype = "multipart/form-data";
@@ -246,14 +261,14 @@ const actions = {
             //baseJson.project.elements.splice(1, 0, obj);
         }
 
-        formData.append('folder', state.projectDetails.name);
-        videoData.append('folder', state.projectDetails.name);
-
-       uploadFiles(formData, videoData, baseJson).then((resolve:any) => {
+        formData.append('folder', state.projectDetails.id);
+        videoData.append('folder', state.projectDetails.id);
+        
+        uploadFiles(formData, videoData, baseJson).then((resolve:any) => {
             router.push("/video");
             //http://techslides.com/demos/sample-videos/small.mp4
-            context.commit('publishStatus', {status:"published", fname:resolve.fname});
-        })
+            setTimeout(()=>context.commit('publishStatus', {status:"published", fname:resolve.fname}), 1000);
+        });
     },
     publishStatus(context: ActionContext<IState, IState>, status:IPublishType){
         context.commit('publishStatus', status);

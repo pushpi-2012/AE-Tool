@@ -3,8 +3,9 @@
         <div class="trns-panel" v-if="!preview">
             <div class="row-prop" v-for="(row, i) in projectRow" :key="i">
                 <label>{{ capitalize(row.label) }}</label>
-                <input :type="row.label!=='name'?'number':'text'" :name="row.label" 
-                    v-model="projectDetails[row.label]" @change="changeProjectDetails" />
+                <label v-if="row.label==='id'">{{projectDetails[row.label]}}</label>
+                <label v-if="row.label==='name'">{{projectDetails[row.label]}}</label>
+                <input v-if="row.label!=='name' && row.label!=='id'" type="number" v-model="projectDetails[row.label]" @change="changeProjectDetails" />
             </div>
         
             <hr />
@@ -44,7 +45,7 @@
             return {
                 img:null,
                 bgImg:null,
-                projectRow:[{label:"name", type:"input"}, {label:"width", type:"input"}, {label:"height", type:"input"}, {label:"time", type:"input"}]
+                projectRow:[{label:"id", type:"label"},{label:"name", type:"input"}, {label:"width", type:"input"}, {label:"height", type:"input"}, {label:"time", type:"input"}]
             }
         },
         computed:{

@@ -4,6 +4,7 @@ export interface IPublishType {
 }
 
 export interface IProjectDetails {
+    id:string,
     name:string,
     width:number,
     height:number,

@@ -61,6 +61,7 @@
             Loader
         },
         mounted(){
+            this.initilized();
             const pel:HTMLElement = document.querySelector('.unit-panel') as HTMLElement;
             this.shiftX = pel?.getBoundingClientRect().left;
             this.shiftY = pel?.getBoundingClientRect().top;
@@ -146,7 +147,7 @@
             ...mapGetters({layer:'getSelectedLayer', selectedKeyframeIndex:"getSelectedKeyframeIndex", contextMenu:'getContextMenu'})
         },
         methods:{
-            ...mapActions(['updateLayer','positionAnimatedFrames']),
+            ...mapActions(['updateLayer','positionAnimatedFrames', 'initilized']),
         }
     });
 </script>
